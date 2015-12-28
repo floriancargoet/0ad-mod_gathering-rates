@@ -1,9 +1,9 @@
 {
-    "name": "Resources Stats",
+    "name": "Gathering Rates",
     "version": "0.1",
-    "label": "Resources Statistics",
-    "url": "https://github.com/floriancargoet/0ad-mod_resources-stats",
-    "description": "Resources Statistics",
+    "label": "Gathering Rates",
+    "url": "https://github.com/floriancargoet/0ad-mod_gathering-rates",
+    "description": "Display gathering rates next to resources",
     "dependencies": ["0ad=0.0.19"],
     "type": "functionality"
 }
