@@ -1,0 +1,9 @@
+{
+    "name": "Resources Stats",
+    "version": "0.1",
+    "label": "Resources Statistics",
+    "url": "https://github.com/floriancargoet/0ad-mod_resources-stats",
+    "description": "Resources Statistics",
+    "dependencies": ["0ad=0.0.19"],
+    "type": "functionality"
+}
