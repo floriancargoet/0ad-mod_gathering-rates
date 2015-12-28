@@ -4,48 +4,48 @@
 (function () {
   var _updatePlayerDisplay = updatePlayerDisplay;
 
-  var resourceRates = {
-    food: 0,
-    wood: 0,
-    stone: 0,
-    metal: 0
-  };
-  var lastResourcesGathered;
+  var statsCount = 10; // we average the last 10 seconds of data
+  var stats = [];
   var lastResourceUpdate = 0;
 
-  var resourcesTypes = [
-    "wood",
-    "food",
-    "stone",
-    "metal"
-  ];
-
-  function updateResourceRates() {
-    // update one per second
+  function updateResourceStats(playerState) {
+    // update once per second
     var now = Date.now();
     if (now - lastResourceUpdate < 1000) {
       return;
     }
-
     lastResourceUpdate = now;
 
     // get current resources statistics
-    var playerState = GetSimState().players[Engine.GetPlayerID()];
     var resourcesGathered = deepcopy(playerState.statistics.resourcesGathered);
-    if (!lastResourcesGathered) {
-      lastResourcesGathered = resourcesGathered;
-      return;
+    stats.push(resourcesGathered);
+    while (stats.length > statsCount) {
+      stats.shift();
     }
-    // diff against last statistics and moving average
-    for (var i = 0; i < resourcesTypes.length; i++) {
-      var type = resourcesTypes[i];
-      resourceRates[type] = resourceRates[type] * 0.8 + (resourcesGathered[type] - lastResourcesGathered[type]) * 0.2;
+  }
+
+  function getResourceRates() {
+    var resourceRates = {
+      food: 0,
+      wood: 0,
+      stone: 0,
+      metal: 0
+    };
+    var resourcesTypes = Object.keys(resourceRates);
+    // moving average
+    var coefficient = 1 / stats.length;
+    for (var i = 1; i < stats.length; i++) {
+      for (var j = 0; j < resourcesTypes.length; j++) {
+        var type = resourcesTypes[j];
+        resourceRates[type] += (stats[i][type] - stats[i - 1][type]) * coefficient;
+      }
     }
-    lastResourcesGathered = resourcesGathered;
+    return resourceRates;
   }
 
   function formatResourceCaption(count, rate) {
-    return Math.floor(count) + " | " + rate.toFixed(1);
+    var precision = (rate < 20 ? 1 : 0);
+    return Math.floor(count) + " | " + rate.toFixed(precision) + "/s";
   }
 
   // overwrite existing function
@@ -56,12 +56,14 @@
     if (!playerState) {
       return;
     }
-    updateResourceRates();
 
-    Engine.GetGUIObjectByName("resourceFood").caption = formatResourceCaption(playerState.resourceCounts.food, resourceRates.food);
-    Engine.GetGUIObjectByName("resourceWood").caption = formatResourceCaption(playerState.resourceCounts.wood, resourceRates.wood);
-    Engine.GetGUIObjectByName("resourceStone").caption = formatResourceCaption(playerState.resourceCounts.stone, resourceRates.stone);
-    Engine.GetGUIObjectByName("resourceMetal").caption = formatResourceCaption(playerState.resourceCounts.metal, resourceRates.metal);
+    updateResourceStats(playerState);
+    var rates = getResourceRates();
+
+    Engine.GetGUIObjectByName("resourceFood").caption = formatResourceCaption(playerState.resourceCounts.food, rates.food);
+    Engine.GetGUIObjectByName("resourceWood").caption = formatResourceCaption(playerState.resourceCounts.wood, rates.wood);
+    Engine.GetGUIObjectByName("resourceStone").caption = formatResourceCaption(playerState.resourceCounts.stone, rates.stone);
+    Engine.GetGUIObjectByName("resourceMetal").caption = formatResourceCaption(playerState.resourceCounts.metal, rates.metal);
   }
 
 }());
